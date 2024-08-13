@@ -74,6 +74,65 @@ Bạn có thể sử dụng các model đã được tôi huấn luyện tại f
 
 ## Hyperparameters
 
+I selected hyperparameters based on the default parameters of PPO, PER, and the PPO-PTR paper:
+- With PER: alpha = 0.7, eps = 0.01 same as [Howuhh PER](https://github.com/Howuhh/prioritized_experience_replay/blob/main/memory/buffer.py). This algorithm don't use beta because we weight sample by importance sampling instead of PER weight computed by priority and beta.
+- Memory size = 256. I try 256, 512 and 1024. But 256 work better.
+- eps_marg = 0.2 same as PPO-PTR paper.
+- ratio between on-policy and off-policy training is 2:8 same as PPO-PTR paper.
+- I kept the gamma values for the stages according to the hyperparameters from my PPO project: 0.9 or 0.99.
+- I only tuned the batch size for stages 8-1 and 8-4: using 256 instead of 64.
+- I still use entropy target = 0.05, I believe this is an important parameter to stabilize learning. Note: I calculate entropy target with old_policy backed up before training instead of behavior policy. 
+- The default parameter set (except for gamma) worked for 30/32 stages. Due to resource limitations, I couldn’t test with only one gamma value, so I had to refer to previous projects (stages that couldn’t be completed with 0.9 were tested with 0.99).
+
+Tôi chọn siêu tham số dựa trên các tham số mặc định của PPO, PER và paper PPO-PTR:
+- Với PER: alpha = 0.7, eps = 0.01 như [Howuhh PER](https://github.com/Howuhh/prioritized_experience_replay/blob/main/memory/buffer.py). Thuật toán này không dùng tham số beta vì chúng ta sẽ đánh trọng số bằng importance sampling thay vì PER weight được tính bằng priority và beta.
+- Memory size = 256. Tôi đã thử 256, 512 và 1024. Tôi thấy 256 work tốt hơn.
+- eps_marg = 0.2 giống như paper PPO-PTR.
+- Tỷ lệ của on-policy và off-policy là 2:8 như paper PPO-PTR.
+- Tôi giữ nguyên gamma cho các stages dựa theo siêu tham số từ project PPO của tôi: 0.9 hoặc 0.99
+- Tôi chỉ tuning batchsize cho stage 8-1 và 8-4: dùng 256 thay vì 64
+- Tôi vẫn dùng entropy target = 0.05, tôi tin rằng đây là tham số quan trọng giúp ổn định việc học. Lưu ý: Tôi tính entropy target với old_policy được backup trước khi train thay vì behavior policy.
+- Bộ tham số mặc định (trừ gamma) đã work với 30/32 stages, vì hạn chế về resource, tôi không thể chỉ thử với 1 gamma duy nhất mà cần tham khảo từ các project cũ (các stage không thể hoàn thành với 0.9 thì thử 0.99) 
+
+You can refer to the hyperparameters in the table below.
+
+Bạn có thể tham khảo siêu tham số ở bảng bên dưới.
+
+| World | Stage | num_envs | learn_step | batchsize | on-epoch | off-epoch | lambda | gamma | learning_rate | target_kl | clip_param | max_grad_norm | norm_adv | V_coef | entropy_coef | loss_type | per_eps | per_alpha | per_beta | eps_marg | memory_size | training_step | training_time |
+|-------|-------|----------|------------|-----------|----------|-----------|--------|-------|---------------|-----------|------------|---------------|----------|--------|--------------|-----------|---------|------------|----------|-----------|--------------|---------------|---------------|
+| 1     | 1     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 104954        | 4:07:44       |
+| 1     | 2     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 337885        | 15:52:13      |
+| 1     | 3     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 533502        | 22:06:32      |
+| 1     | 4     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 46076         | 1:57:32       |
+| 2     | 1     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 415724        | 15:06:07      |
+| 2     | 2     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 497663        | 17:39:54      |
+| 2     | 3     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 120297        | 4:34:15       |
+| 2     | 4     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 86015         | 3:31:16       |
+| 3     | 1     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 126464        | 4:33:51       |
+| 3     | 2     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 67053         | 3:02:46       |
+| 3     | 3     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 138742        | 4:04:53       |
+| 3     | 4     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 106495        | 3:11:51       |
+| 4     | 1     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 134124        | 3:55:59       |
+| 4     | 2     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 436208        | 15:47:05      |
+| 4     | 3     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 106484        | 4:21:14       |
+| 4     | 4     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 219638        | 7:33:17       |
+| 5     | 1     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 156160        | 5:47:13       |
+| 5     | 2     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 326645        | 9:55:26       |
+| 5     | 3     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 214010        | 8:17:16       |
+| 5     | 4     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 205299        | 6:57:02       |
+| 6     | 1     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 72187         | 3:01:48       |
+| 6     | 2     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 367614        | 14:29:09      |
+| 6     | 3     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 158714        | 6:11:25       |
+| 6     | 4     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 137216        | 5:22:12       |
+| 7     | 1     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 179706        | 7:05:49       |
+| 7     | 2     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 595449        | 16:05:53      |
+| 7     | 3     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 217597        | 7:54:26       |
+| 7     | 4     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 120787        | 4:52:59       |
+| 8     | 1     | 16       | 512        | 256       | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 2455542       | 3 days, 19:55:54  |
+| 8     | 2     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 759799        | 21:39:34      |
+| 8     | 3     | 16       | 512        | 64        | 2        | 8         | 0.95   | 0.9   | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 263168        | 9:13:53       |
+| 8     | 4     | 16       | 512        | 256       | 2        | 8         | 0.95   | 0.99  | 7e-5      | 0.05      | 0.2        | 0.5           | FALSE    | 0.5    | 0.01         | huber     | 0.01    | 0.7        | 0.4      | 0.2       | 256          | 1532832       | 2 days, 12:02:26  |
+
 ## Questions
 
 * Can my code guarantee completion of all stages?
@@ -82,7 +141,7 @@ Bạn có thể sử dụng các model đã được tôi huấn luyện tại f
   - Stage 8-4 is almost impossible to complete unless you're lucky. I've tried many hyperparameters and run multiple times with each set. I was lucky when Mario learned to do a double jump (game hack?). If you retrain, I think you won't be able to complete stage 8-4.
 
 * How long does it take to train the agent?
-  - From a few hours to a few days. It depends on the hardware. I used different hardware during training and trained multiple agents at the same time, so the speed was affected. You can refer to the table in the Hyperparameters section.
+  - From a few hours to a few days. It depends on the hardware. I used different hardware during training and trained multiple agents at the same time, so the speed was affected. You can refer to the table in the **Hyperparameters** section.
 
 * What can you do to improve my code?
   - You can separate the testing part into a separate thread or process. I'm not good at multithreading so I didn't do that!
@@ -126,6 +185,11 @@ Bạn có thể sử dụng các model đã được tôi huấn luyện tại f
   - Trong paper, tác giả sử dụng ký hiệu b để chỉ behavior policy (save vào replay) và old_pi để chỉ policy trước khi train, pi là policy đang train (vì agent được train qua nhiều batch và epoch nên old_pi sẽ khác pi). Trong paper không nói rõ về ratio của PPO r = pi / old_pi hay r = pi / b nhưng theo lý thuyết PPO và thực nghiệm của tôi thì thuật toán chỉ work khi r = pi / b.
   - Với thuật toán trong paper, tác giả backup old_pi trước mỗi lần trainning với data được lấy từ replay. Nhưng tôi thấy việc này không ổn định, tôi chỉ backup old_pi trước mỗi lần train và chỉ update old_pi khi tới lần train tiếp theo (old_pi sẽ được backup và giữ nguyên trước khi train 2 epochs on-policy và 8 epochs off-policy)
 
+## Acknowledgements
+With my code, I can completed 32/32 stages of Super Mario Bros.
+
+Tôi đã hoàn thành 32/32 stages của Super Mario Bros với thuật toán này.
+
 ## Requirements
 
 * **python 3>3.6**
@@ -136,11 +200,6 @@ Bạn có thể sử dụng các model đã được tôi huấn luyện tại f
 * **cv2**
 * **pytorch** 
 * **numpy**
-
-## Acknowledgements
-With my code, I can completed 32/32 stages of Super Mario Bros.
-
-Tôi đã hoàn thành 32/32 stages của Super Mario Bros với thuật toán này.
 
 ## Reference
 * [Howuhh PER](https://github.com/Howuhh/prioritized_experience_replay/blob/main/memory/buffer.py)

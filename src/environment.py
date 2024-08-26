@@ -141,10 +141,10 @@ class CustomRewardAndDoneEnv(gym.Wrapper):
                     if info["x_pos"] >= 320:
                         done = True
                         reward = -50
-                elif info["x_pos"] == 312:
+                elif info["x_pos"] >= 312-5 and info["x_pos"] <= 312+5:
                     done = True
                     reward = -50
-                elif info["x_pos"] == 56 and self.max_x > 3650 and self.sea_map == False:
+                elif info["x_pos"] >= 56-5 and info["x_pos"] <= 56-5 and self.max_x > 3650 and self.sea_map == False:
                     reward += 50
                     self.sea_map = True
             if info["x_pos"] > self.max_x + 100:

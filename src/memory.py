@@ -186,7 +186,7 @@ class PrioritizedReplayBuffer:
 
         states = self.states[sample_idxs]
         next_states = self.next_states[sample_idxs]
-        next_states = np.concatenate((states[:, :, :3, :, :], next_states), axis = 2)
+        next_states = np.concatenate((states[:, :, 1:, :, :], next_states), axis = 2)
 
         batch = (
             states.transpose(1, 0, 2, 3, 4),
